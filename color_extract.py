@@ -1,17 +1,23 @@
 #!/usr/bin/pypy3
+
 from colorthief import ColorThief as ctf
 from pathlib import Path  # get corrent path
 import subprocess
 import multiprocessing as mp
 import os
 from os.path import expanduser
-from functools import partial
+import sys
+
 
 class Extractor():
-    def __init__(self):
-        self.color_count = 4
-        self.quality = 30000
-        self.directory = '/home/neg/pic/wl'
+    def __init__(self, directory, color_count=8, quality=320):
+        self.color_count = color_count
+        self.quality = quality
+        search_dir = os.path.realpath(expanduser(directory))
+        if Path(os.path.normpath(search_dir)).is_dir():
+            self.directory = search_dir
+        else:
+            sys.exit(0)
         self.print_filename = True
 
     def rgb_to_24bit(self, rgb):
@@ -35,18 +41,17 @@ class Extractor():
         if Path(filename).exists():
             try:
                 color_thief = ctf(expanduser(pic))
+                gen_palette = color_thief.get_palette(
+                    color_count=self.color_count, quality=self.quality
+                )
             except Exception:
                 return
-            gen_palette = color_thief.get_palette(
-                color_count=self.color_count, quality=self.quality
-            )
             printer = self.rgb_to_24bit
             for t in map(printer, gen_palette):
                 print(t, end='')
             if self.print_filename:
                 print(f'    {pic}', end='')
             print()
-
 
     def extract_pallete(self):
         pool = mp.Pool(processes=8)
@@ -56,6 +61,6 @@ class Extractor():
 
 
 if __name__ == '__main__':
-    extractor = Extractor()
+    extractor = Extractor('~/pic/wl')
     extractor.extract_pallete()
 
